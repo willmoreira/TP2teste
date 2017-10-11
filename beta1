@@ -1,0 +1,53 @@
+# -*- coding: utf-8 -*-
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+import matplotlib.gridspec as gridspec
+url = 'http://www.tratabrasil.org.br/saneamento-no-brasil'
+r = requests.get(url)
+
+s = BeautifulSoup(r.content, 'html.parser')
+
+estados = {'#AC','#AP','#AM','#AL','#BA','#CE','#PA','#RO','#RR','#TO','#MA','#PB','#PE','#PI',
+                  '#RN','#SE','#ES','#MG','#RJ','#SP','#PR','#RS','#SC','#DF','#GO','#MT','#MS',}
+indices =['Rede de Agua','Coleta De Esgoto','Tratamento De esgoto','Perdas de agua']
+
+lista_estados = ['ACRE','AMAPA','AMAZONAS','ALAGOAS','BAHIA','CEARÁ','PARÁ','RONDONIA','RORAIMA',
+                          'TOCANTINS','MARANHAO','PARAIBA','PERNABUCO','PIAUI','RIO GRANDE NORTE','SERGIPE',
+                          'ESPIRITO SANTO','MINAS GERAIS','RIO DE JANEIRO','SAO PAULO','PARANA','RIO GRANDE DO SUL',
+                          'SANTA CATARINA','DISTRITO FEDERAL','GOIAS','MATO GROSSO','MATO GROSSO DO SUL']
+
+dados = s.findAll("div",{"data-id":estados})
+
+print("""Dados em percentuais sobre saneamento de agua e esgoto dos estados
+Rede de Água: Índice de atendimento total de água
+Coleta de Esgoto: Índice de atendimento total de esgoto referido aos municípios atendidos com água
+Tratamento de esgoto: Índice de esgoto tratado referido à água consumida
+Perdas de água: Índice de perdas na distribuição""" '\n')
+i=0
+dici={}
+for item in dados:
+    #print("DADOS DO ESTADO %s EM PERCENTUAIS" %(lista_estados[i]), end='\n')    
+    resultado = item.getText()
+    #print(resultado)
+    trat = resultado.split('\n')
+    if(i<27):
+            
+            dici[lista_estados[i]]=[float(trat[1].split(":")[1].strip().replace(",",".")),float(trat[2].split(":")[1].strip().replace(",",".")),float(trat[3].split(":")[1].strip().replace(",",".")),float(trat[4].split(":")[1].strip().replace(",","."))]
+    i+=1
+
+df = pd.DataFrame(dici,columns=lista_estados,index=indices)
+print (df)
+
+rede = df.ix[:'Rede de Agua']
+coleta=df.ix[:'Coleta De Esgoto']
+trat=df.ix[:'Tratamento De esgoto']
+perda=df.ix[:'Perdas de agua']
+
+rede.T.plot.bar()
+coleta.T.plot.bar()
+trat.T.plot.bar()
+perda.T.plot.bar()
